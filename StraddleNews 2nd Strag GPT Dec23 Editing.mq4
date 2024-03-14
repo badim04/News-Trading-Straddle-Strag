@@ -179,14 +179,14 @@ void OpenStopOrder()
    // Calculate BuyStop and SellStop prices
    CalculateStopPrices(ORDER_TYPE_BUY, BuyStopPrice, SellStopPrice);
    
-  
+ /* 
    // Check stop levels for BuyStop
    if (!CheckStopLevels(BuyStopPrice, 0))
    {
       Print("BuyStop levels check failed.");
       return;
    }
-    
+ */   
    // Place BuyStop order
    BuyStopTicket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, BuyStopPrice, Slippage, TakeProfit, StopLoss, "BuyStop Order", 0, 0, clrGreen);
    if (BuyStopTicket > 0)
@@ -198,14 +198,14 @@ void OpenStopOrder()
       Print("Error placing BuyStop order: ", GetLastError());
       Print("Symbol: ", Symbol()); // Print the symbol for debugging
    }
-  
+ /* 
    // Check stop levels for SellStop
    if (!CheckStopLevels(0, SellStopPrice))
    {
       Print("SellStop levels check failed.");
       return;
    }
-  
+  */
    // Place SellStop order
    SellStopTicket = OrderSend(Symbol(), OP_SELLSTOP, LotSize, SellStopPrice, Slippage, 0, 0, "SellStop Order", 0, 0, clrRed);
    if (SellStopTicket > 0)
@@ -218,7 +218,7 @@ void OpenStopOrder()
       Print("Symbol: ", Symbol()); // Print the symbol for debugging
    }
 }
-
+/*
 //+------------------------------------------------------------------+
 //| Function to check stop levels before placing orders             |
 //+------------------------------------------------------------------+
@@ -226,6 +226,9 @@ bool CheckStopLevels(double buyStopLevel, double sellStopLevel)
 {
     double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
     
+    Print("Checking stop and buy - Stop levels.");
+    
+    Print("stopLevel:",stopLevel," buyStopLevel:", buyStopLevel, " sellStopLevel:",sellStopLevel);
     // Check if the broker's stop level is not known (indicated by -1)
     if (stopLevel <= 0)
     {
@@ -241,7 +244,7 @@ bool CheckStopLevels(double buyStopLevel, double sellStopLevel)
 
     return true;
 }
-
+*/
 
 
 //+------------------------------------------------------------------+
