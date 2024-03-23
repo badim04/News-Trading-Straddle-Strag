@@ -37,6 +37,10 @@ double PipsDiff;
 //+------------------------------------------------------------------+
 int OnInit()
 {
+   //trial SL and TP , maybe removed
+   StopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
+   if (SL < StopLevel) SL = StopLevel;
+   if (TP < StopLevel) TP = StopLevel;
     // Place the initial countdown label
     DisplayCountdown();
 
@@ -206,8 +210,10 @@ void OpenStopOrder()
       return;
    }
   */
+   //minimum stop level set in your broker's MetaTrader
+   Print("StopLevel = ", (int)MarketInfo(Symbol(), MODE_STOPLEVEL));
    // Place SellStop order
-   SellStopTicket = OrderSend(Symbol(), OP_SELLSTOP, LotSize, SellStopPrice, Slippage, 0, 0, "SellStop Order", 0, 0, clrRed);
+   SellStopTicket = OrderSend(Symbol(), OP_SELLSTOP, LotSize, SellStopPrice, Slippage, 100.0, 100.0, "SellStop Order", 0, 0, clrRed);
    if (SellStopTicket > 0)
    {
       Print("SellStop order placed successfully.");
