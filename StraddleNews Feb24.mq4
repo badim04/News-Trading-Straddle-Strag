@@ -169,8 +169,6 @@ void CalculateTPSL(ENUM_ORDER_TYPE orderType, double openPrice, double BuyStopPr
    Print("Calculated Stop Loss Price: ", stoplossprice);
 }
 
-
-
 //+------------------------------------------------------------------+
 //| Function to calculate BuyStop and SellStop prices                |
 //+------------------------------------------------------------------+
@@ -197,6 +195,13 @@ void CalculateStopPrices(ENUM_ORDER_TYPE orderType, double& BuyStopPrice, double
    }
 
    CalculateTPSL(orderType, openPrice, BuyStopPrice, SellStopPrice, takeprofitprice, stoplossprice);
+
+   // Print out BuyStop and SellStop prices
+   Print("Open Price: ", openPrice);
+   Print("BuyStop Price: ", BuyStopPrice);
+   Print("SellStop Price: ", SellStopPrice);
+   Print("Take Profit Price: ", takeprofitprice);
+   Print("Stop Loss Price: ", stoplossprice);
 }
 
 
@@ -209,6 +214,8 @@ void OpenStopOrder()
    double SellStopPrice;
    double takeprofitprice = 0.0; // Initialize variables
    double stoplossprice = 0.0;
+   //double takeprofitprice = takeprofitprice; // Initialize variables
+   //double stoplossprice = stoplossprice;
 
    // Calculate BuyStop and SellStop prices and their corresponding SL and TP
    CalculateStopPrices(ORDER_TYPE_BUY, BuyStopPrice, SellStopPrice);
@@ -216,9 +223,14 @@ void OpenStopOrder()
    // Print out Ask and Bid prices
    Print("Ask Price: ", Ask);
    Print("Bid Price: ", Bid);
+      // Print out BuyStop and SellStop prices
+   Print("BuyStop Price: ", BuyStopPrice);
+   Print("SellStop Price: ", SellStopPrice);
+   Print("Take Profit Price: ", takeprofitprice);
+   Print("Stop Loss Price: ", stoplossprice);
 
    // Place BuyStop order
-   BuyStopTicket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, BuyStopPrice, Slippage, 0, 0, "BuyStop Order", 0, 0, clrGreen);
+   BuyStopTicket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, BuyStopPrice, Slippage, takeprofitprice, stoplossprice, "BuyStop Order", 0, 0, clrGreen);
    //BuyStopTicket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, BuyStopPrice, Slippage, BuyStopPrice + (Point * TakeProfit), BuyStopPrice - (Point * StopLoss), "BuyStop Order", 0, 0, clrGreen);
    if (BuyStopTicket > 0)
    {
@@ -261,6 +273,12 @@ void ModifyStopOrder()
    // Recalculate stop loss and take profit for BuyStop order
    stoplossprice = newBuyStopPrice - (Point * StopLoss);
    takeprofitprice = newBuyStopPrice + (Point * TakeProfit);
+   
+   // Print out BuyStop and SellStop prices
+   Print("New Buy Stop Price: ", newBuyStopPrice);
+   Print("New Sell Stop Price: ", newSellStopPrice);
+   Print("New TakeProfit Price: ", takeprofitprice);
+   Print("New StopLoss Price: ", stoplossprice);
 
    // Modify BuyStop order
    if (!OrderModify(BuyStopTicket, newBuyStopPrice, takeprofitprice, stoplossprice, 0, clrGreen))
