@@ -28,8 +28,8 @@ input int Slippage = 0;
 int BuyStopTicket = 0;
 int SellStopTicket = 0;
 datetime LastTradeTime = 0;
-double TakeProfit = 200;//To convert the tp n sl so it would be in pips
-double StopLoss = 200;
+double TakeProfit;//To convert the tp n sl so it would be in pips
+double StopLoss;
 double PipsDiff;
 
 //+------------------------------------------------------------------+
@@ -119,83 +119,40 @@ bool ShouldTrade()
 
     return false;
 }
-/*
-//+------------------------------------------------------------------+
-//| Function to calculate Take Profit and Stop Loss prices           |
-//+------------------------------------------------------------------+
-void CalculateTPSL(ENUM_ORDER_TYPE orderType, double openPrice, double BuyStopPrice, double SellStopPrice, double& takeprofitprice, double& stoplossprice)
-{
-   // Print out TakeProfit and StopLoss values
-   Print("TakeProfit: ", TakeProfit);
-   Print("StopLoss: ", StopLoss);
 
+
+//+---------------------------------------------------------------------------------------+
+//| Function to calculate Take Profit and Stop Loss and BuyStop SellStop prices           |
+//+---------------------------------------------------------------------------------------+
+
+void CalculatePrices(ENUM_ORDER_TYPE orderType, double& openPrice, double& takeprofitprice, double& stoplossprice, double& BuyStopPrice, double& SellStopPrice)
+{
    if (orderType == ORDER_TYPE_BUY)
    {
-      takeprofitprice = BuyStopPrice + TakeProfit;
-      stoplossprice = BuyStopPrice - StopLoss;
+      openPrice = Ask;
+      takeprofitprice = openPrice + TakeProfit;
+      stoplossprice = Bid - StopLoss;
    }
    else
    {
-      takeprofitprice = SellStopPrice - TakeProfit;
-      stoplossprice = SellStopPrice + StopLoss;
+      openPrice = Bid;
+      takeprofitprice = openPrice - TakeProfit;
+      stoplossprice = Ask + StopLoss;
    }
 
-   // Print out calculated Take Profit and Stop Loss prices
-   Print("Calculated Take Profit Price: ", takeprofitprice);
-   Print("Calculated Stop Loss Price: ", stoplossprice);
-}
-*/
-//+------------------------------------------------------------------+
-//| Function to calculate Take Profit and Stop Loss prices           |
-//+------------------------------------------------------------------+
-void CalculateTPSL(ENUM_ORDER_TYPE orderType, double openPrice, double BuyStopPrice, double SellStopPrice, double& takeprofitprice, double& stoplossprice)
-{
-   double pipsToPrice = PipsToPrice(TakeProfitPips, Symbol()); // Convert TakeProfitPips to price
-   double stopLossPrice = PipsToPrice(StopLossPips, Symbol()); // Convert StopLossPips to price
-
-   if (orderType == ORDER_TYPE_BUY)
-   {
-      takeprofitprice = BuyStopPrice + pipsToPrice;
-      stoplossprice = BuyStopPrice - stopLossPrice;
-   }
-   else
-   {
-      takeprofitprice = SellStopPrice - pipsToPrice;
-      stoplossprice = SellStopPrice + stopLossPrice;
-   }
-
-   // Print out calculated Take Profit and Stop Loss prices
-   Print("Calculated Take Profit Price: ", takeprofitprice);
-   Print("Calculated Stop Loss Price: ", stoplossprice);
-}
-
-//+------------------------------------------------------------------+
-//| Function to calculate BuyStop and SellStop prices                |
-//+------------------------------------------------------------------+
-void CalculateStopPrices(ENUM_ORDER_TYPE orderType, double& BuyStopPrice, double& SellStopPrice)
-{
-   double openPrice;
-   double takeprofitprice;
-   double stoplossprice;
-
-   // Use the global variable directly
    PipsDiff = PipsToPrice(PipsAway, Symbol());
 
    if (orderType == ORDER_TYPE_BUY)
    {
-      openPrice = Ask;
       BuyStopPrice = openPrice + PipsDiff;
       SellStopPrice = openPrice - PipsDiff;
    }
    else
    {
-      openPrice = Bid;
       BuyStopPrice = openPrice - PipsDiff;
       SellStopPrice = openPrice + PipsDiff;
    }
-
-   CalculateTPSL(orderType, openPrice, BuyStopPrice, SellStopPrice, takeprofitprice, stoplossprice);
-
+   
    // Print out BuyStop and SellStop prices
    Print("Open Price: ", openPrice);
    Print("BuyStop Price: ", BuyStopPrice);
@@ -210,17 +167,16 @@ void CalculateStopPrices(ENUM_ORDER_TYPE orderType, double& BuyStopPrice, double
 //+------------------------------------------------------------------+
 void OpenStopOrder()
 {
+   double openPrice;
+   double takeprofitprice;
+   double stoplossprice;
    double BuyStopPrice;
    double SellStopPrice;
-   double takeprofitprice = 0.0; // Initialize variables
-   double stoplossprice = 0.0;
-   //double takeprofitprice = takeprofitprice; // Initialize variables
-   //double stoplossprice = stoplossprice;
 
-   // Calculate BuyStop and SellStop prices and their corresponding SL and TP
-   CalculateStopPrices(ORDER_TYPE_BUY, BuyStopPrice, SellStopPrice);
+   // Calculate prices
+   CalculatePrices(ORDER_TYPE_BUY, openPrice, takeprofitprice, stoplossprice, BuyStopPrice, SellStopPrice);
    
-   // Print out Ask and Bid prices
+      // Print out Ask and Bid prices
    Print("Ask Price: ", Ask);
    Print("Bid Price: ", Bid);
       // Print out BuyStop and SellStop prices
@@ -228,10 +184,9 @@ void OpenStopOrder()
    Print("SellStop Price: ", SellStopPrice);
    Print("Take Profit Price: ", takeprofitprice);
    Print("Stop Loss Price: ", stoplossprice);
-
+   
    // Place BuyStop order
-   BuyStopTicket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, BuyStopPrice, Slippage, takeprofitprice, stoplossprice, "BuyStop Order", 0, 0, clrGreen);
-   //BuyStopTicket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, BuyStopPrice, Slippage, BuyStopPrice + (Point * TakeProfit), BuyStopPrice - (Point * StopLoss), "BuyStop Order", 0, 0, clrGreen);
+   BuyStopTicket = OrderSend(Symbol(), OP_BUYSTOP, LotSize, BuyStopPrice, Slippage, TakeProfit, StopLoss, "BuyStop Order", 0, 0, clrGreen);
    if (BuyStopTicket > 0)
    {
       Print("BuyStop order placed successfully.");
@@ -244,7 +199,6 @@ void OpenStopOrder()
 
    // Place SellStop order
    SellStopTicket = OrderSend(Symbol(), OP_SELLSTOP, LotSize, SellStopPrice, Slippage, 0, 0, "SellStop Order", 0, 0, clrRed);
-   //SellStopTicket = OrderSend(Symbol(), OP_SELLSTOP, LotSize, SellStopPrice, Slippage, SellStopPrice - (Point * TakeProfit), SellStopPrice + (Point * StopLoss), "SellStop Order", 0, 0, clrRed);
    if (SellStopTicket > 0)
    {
       Print("SellStop order placed successfully.");
@@ -256,58 +210,6 @@ void OpenStopOrder()
    }
 }
 
-
-//+------------------------------------------------------------------+
-//| Function to modify BuyStop and SellStop orders                   |
-//+------------------------------------------------------------------+
-void ModifyStopOrder()
-{
-   double newBuyStopPrice;
-   double newSellStopPrice;
-   double takeprofitprice;
-   double stoplossprice;
-
-   // Calculate BuyStop and SellStop prices and their corresponding SL and TP
-   CalculateStopPrices(ORDER_TYPE_BUY, newBuyStopPrice, newSellStopPrice);
-
-   // Recalculate stop loss and take profit for BuyStop order
-   stoplossprice = newBuyStopPrice - (Point * StopLoss);
-   takeprofitprice = newBuyStopPrice + (Point * TakeProfit);
-   
-   // Print out BuyStop and SellStop prices
-   Print("New Buy Stop Price: ", newBuyStopPrice);
-   Print("New Sell Stop Price: ", newSellStopPrice);
-   Print("New TakeProfit Price: ", takeprofitprice);
-   Print("New StopLoss Price: ", stoplossprice);
-
-   // Modify BuyStop order
-   if (!OrderModify(BuyStopTicket, newBuyStopPrice, takeprofitprice, stoplossprice, 0, clrGreen))
-   {
-      Print("Error modifying BuyStop order: ", GetLastError());
-      Print("Symbol: ", Symbol()); // Print the symbol for debugging
-   }
-   else
-   {
-      Print("BuyStop order modified successfully.");
-   }
-
-   // Recalculate stop loss and take profit for SellStop order
-   stoplossprice = newSellStopPrice + (Point * StopLoss);
-   takeprofitprice = newSellStopPrice - (Point * TakeProfit);
-
-   // Modify SellStop order
-   if (!OrderModify(SellStopTicket, newSellStopPrice, takeprofitprice, stoplossprice, 0, clrRed))
-   {
-      Print("Error modifying SellStop order: ", GetLastError());
-      Print("Symbol: ", Symbol()); // Print the symbol for debugging
-   }
-   else
-   {
-      Print("SellStop order modified successfully.");
-   }
-}
-
-
 /*
 //+------------------------------------------------------------------+
 //| Function to check stop levels before placing orders             |
@@ -316,6 +218,9 @@ bool CheckStopLevels(double buyStopLevel, double sellStopLevel)
 {
     double stopLevel = MarketInfo(Symbol(), MODE_STOPLEVEL);
     
+    Print("Checking stop and buy - Stop levels.");
+    
+    Print("stopLevel:",stopLevel," buyStopLevel:", buyStopLevel, " sellStopLevel:",sellStopLevel);
     // Check if the broker's stop level is not known (indicated by -1)
     if (stopLevel <= 0)
     {
@@ -331,8 +236,8 @@ bool CheckStopLevels(double buyStopLevel, double sellStopLevel)
 
     return true;
 }
-
 */
+
 
 //+------------------------------------------------------------------+
 //| Function to display the countdown label                         |
@@ -467,125 +372,5 @@ double PipsToPrice(double pips, string symbol) {
    return(pips*Pipsize(symbol));
 }
 
-
-
-
-
-
-
-/*
-// Function to place a buy stop order
-bool BuyStopOrder(string symbol, double price, double volume)
-{
-	// Check if current Bid price is less than the specified stop price
-	if (Bid < price)
-	{
-		// Order parameters
-		int order_type = OP_BUYSTOP;
-		double stop_price = price;
-		int slippage = 5; // Set slippage tolerance
-		
-		// Place the buy stop order
-		int order_ticket = OrderSend(symbol, order_type, volume, stop_price, slippage);
-		if (order_ticket > 0)
-		{
-			// Order placed successfully
-			Print("Buy stop order placed for ", symbol, " at ", price, " with volume ", volume, " and order ticket ", order_ticket);
-			return true;
-		}
-		else
-		{
-			// Order placement failed
-			Print("Error placing buy stop order: ", GetLastError());
-			return false;
-		}
-	}
-	else
-	{
-		Print("Current Bid price (" + MathToString(Bid) + ") is equal to or higher than the stop price (" + MathToString(price) + ")");
-		return false;
-	}
-}
-*/
-
-
-/*
-//+------------------------------------------------------------------+
-//|                                                   NewsTrader.mq4 |
-//|                                                     Forex Fellow |
-//|                                              www.forexfellow.com |
-//+------------------------------------------------------------------+
-#property copyright "Forex Fellow"
-#property link      "www.forexfellow.com"
-
-int cnt, ticket =0, ticket2=0, total;
-extern int lot = 1;
-extern int sl = 10;
-extern int tp = 10;
-extern int bias = 20; //we place our order 20 pips from current price
-
-double orderAsk;
-double orderBid;
-string OrderCloseDate;
-      
-int init()
-  {
-  Print(MarketInfo(Symbol(), MODE_STOPLEVEL));
-   return(0);
-  }
-int deinit()
-  {
-   return(0);
-  }
-int start()
-  {
-   
-   //we have to know the time and date of news publication
-   //I don't want to write what sombody else has written here https://www.mql5.com/en/articles/1502
-   //we can use this indicator to get the date and time of news publications
-   //I have put here some example date and 
-   int newsDateYear = 2010;
-   int newsDateMonth = 3;
-   int newsDateDay = 8;
-   int newsDateHour = 1;
-   int newsDateMinute = 30;
-   
-   //we need to open order before news publication
-   newsDateMinute -= 10; //10 minutes before publication
-   string orderOpenDate = newsDateDay + "-" + newsDateMonth + "-" + newsDateYear 
-                                                + " " + newsDateHour + ":" + newsDateMinute + ":00";
-   int currentYear = Year();
-   int currentMonth = Month();
-   int currentDay = Day();
-   int currentHour = Hour();
-   int currentMinute = Minute();
-   
-   //we get current time
-   string currentDate = currentDay + "-" + currentMonth + "-" + currentYear 
-                                                + " " + currentHour + ":" + currentMinute + ":00";
-                                                             
-   
-   if(orderOpenDate == currentDate)
-   { 
-      //we place 2 orders: buy stop and sell stop
-      if(ticket < 1)
-      {
-         orderAsk = Ask - bias * Point;
-         orderBid = Bid - bias * Point;
-         ticket=OrderSend(Symbol(),OP_SELLSTOP,lot,orderBid,1,orderAsk+Point*sl,orderBid-tp*Point,"NewsTrader",2,0,Red); 
-      }
-      if(ticket2 < 1)
-      {
-         orderAsk = Ask + bias * Point;
-         orderBid = Bid + bias * Point;
-         ticket2=OrderSend(Symbol(),OP_BUYSTOP,lot,orderAsk,1,orderBid-Point*sl,orderAsk+tp*Point,"NewsTrader",2,0,Green); 
-      }         
-   }
-   
-   
-   return(0);
-  }
-  
-*/
 
 
